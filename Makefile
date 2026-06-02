@@ -10,8 +10,18 @@ DEFAULTDIR ?= /etc/default
 TARGET := vautoshiftd
 SRCS := main.c parser.c hotplug.c
 OBJS := $(SRCS:.c=.o)
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+UNAME_M := $(shell uname -m)
+ifeq ($(UNAME_M),x86_64)
+ARCH := amd64
+else
+ARCH := $(UNAME_M)
+endif
+DISTNAME := vautoshiftd-$(VERSION)-linux-$(ARCH)
+DISTDIR := dist/$(DISTNAME)
+DISTTAR := dist/$(DISTNAME).tar.gz
 
-.PHONY: all clean install uninstall
+.PHONY: all clean install uninstall dist
 
 all: $(TARGET)
 
@@ -35,3 +45,14 @@ install: $(TARGET) vautoshiftd.service vautoshiftd.default
 uninstall:
 	rm -f "$(DESTDIR)$(LIBEXECDIR)/$(TARGET)"
 	rm -f "$(DESTDIR)$(UNITDIR)/vautoshiftd.service"
+
+dist: $(TARGET)
+	rm -rf "$(DISTDIR)"
+	mkdir -p "$(DISTDIR)/etc/default"
+	cp "$(TARGET)" vautoshiftd.service "$(DISTDIR)/"
+	cp vautoshiftd.default "$(DISTDIR)/etc/default/vautoshiftd"
+	cp packaging/release/install.sh packaging/release/uninstall.sh "$(DISTDIR)/"
+	chmod 755 "$(DISTDIR)/install.sh" "$(DISTDIR)/uninstall.sh" "$(DISTDIR)/$(TARGET)"
+	( cd "$(DISTDIR)" && sha256sum vautoshiftd vautoshiftd.service etc/default/vautoshiftd install.sh uninstall.sh > SHA256SUMS )
+	tar -czf "$(DISTTAR)" -C dist "$(DISTNAME)"
+	@echo "Created $(DISTTAR)"

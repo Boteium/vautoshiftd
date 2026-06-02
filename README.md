@@ -30,6 +30,8 @@ sudo ./vautoshiftd
 
 Default behavior is allow-all keyboards with the default autoshift timeout (`175ms`).
 
+Pre-built Linux binaries: see [RELEASE.md](RELEASE.md).
+
 ## Systemd
 
 Install system-wide:
